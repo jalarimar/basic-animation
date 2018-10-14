@@ -25,6 +25,8 @@ aiVector3D scene_min, scene_max;
 bool modelRotn = true;
 std::map<int, int> texIdMap;
 
+const aiScene* scene2 = NULL;
+
 aiVector3D rootPos;
 
 typedef struct original_mesh {
@@ -40,12 +42,21 @@ bool loadModel(const char* fileName)
 {
 	scene = aiImportFile(fileName, aiProcessPreset_TargetRealtime_MaxQuality);
 	if(scene == NULL) exit(1);
-	//printSceneInfo(scene);
-	//printTreeInfo(scene->mRootNode);
-	//printBoneInfo(scene);
-	//printAnimInfo(scene);
+	// printSceneInfo(scene);
+	// printTreeInfo(scene->mRootNode);
+	// printBoneInfo(scene);
+	// printAnimInfo(scene);
 	get_bounding_box(scene, &scene_min, &scene_max);
 	return true;
+}
+
+void loadAnimations(const char* fileName) {
+	scene2 = aiImportFile(fileName, aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone);
+	if(scene2 == NULL) exit(1);
+	// printSceneInfo(scene2);
+	// printTreeInfo(scene2->mRootNode);
+	// printBoneInfo(scene2);
+	// printAnimInfo(scene2);
 }
 
 
@@ -100,10 +111,8 @@ void loadGLTextures(const aiScene* scene)
 			{
 				cout << "Couldn't load Image: %s\n" << path.data << endl;
 			}
-
 		}
 	}  //loop for material
-
 }
 
 
@@ -167,7 +176,6 @@ void render (const aiScene* sc, const aiNode* nd)
 		}
 
 	}
-
 	// Draw all children
 	for (int i = 0; i < nd->mNumChildren; i++)
 		render(sc, nd->mChildren[i]);
@@ -187,7 +195,7 @@ void initialise()
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 	glEnable(GL_COLOR_MATERIAL);
 	loadModel("mannequin.fbx");			//<<<-------------Specify input file name here
-	loadModel("jump.fbx");
+	loadAnimations("jump.fbx");
 	//loadGLTextures(scene);        //<<<-------------Uncomment when implementing texturing
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -240,7 +248,7 @@ aiVector3D lerpPosition(aiNodeAnim* channel, int tick) {
 //----Timer callback ----
 void update(int time)
 {
-	aiAnimation* anim = scene->mAnimations[0];
+	aiAnimation* anim = scene2->mAnimations[0];
 	double ticksPerSec = anim->mTicksPerSecond;
 	int tick = (time * ticksPerSec) / 1000;
 
@@ -328,7 +336,7 @@ void display()
 	float ry = rootPos.y;
 	float rz = rootPos.z;
 
-	gluLookAt(-250 + rx, 150 + ry, -200 + rz, rx, ry, rz, 0, 1, 0);
+	gluLookAt(-700 + rx, 1300 + ry, -700 + rz, rx, ry, rz, 0, 1, 0);
 
 	// floor
 	glColor4f(1, 0, 0, 1.0);  //red
