@@ -133,8 +133,7 @@ void render (const aiScene* sc, const aiNode* nd)
 	for (int n = 0; n < nd->mNumMeshes; n++)
 	{
 		meshIndex = nd->mMeshes[n];          //Get the mesh indices from the current node
-		mesh = scene->mMeshes[meshIndex];    //Using mesh index, get the mesh object
-
+		mesh = sc->mMeshes[meshIndex];    //Using mesh index, get the mesh object
 		apply_material(sc->mMaterials[mesh->mMaterialIndex]);  //Change opengl state to that material's properties 
 
 		if(mesh->HasNormals())
@@ -252,6 +251,8 @@ void update(int time)
 	double ticksPerSec = anim->mTicksPerSecond;
 	int tick = (time * ticksPerSec) / 1000;
 
+	tick = 0;
+
 	if (tick < anim->mDuration) {
 		for (int i = 0; i < anim->mNumChannels; i++) {
 			aiNodeAnim* channel = anim->mChannels[i];
@@ -262,7 +263,7 @@ void update(int time)
 				posn = channel->mPositionKeys[tick].mValue;
 				rootPos = posn;
 			}
-			aiQuaternion rotn = lerpRotation(channel, tick);
+			aiQuaternion rotn = channel->mRotationKeys[tick].mValue; //lerpRotation(channel, tick);
 
 			aiMatrix4x4 matPos;
 			matPos.Translation(posn, matPos);
@@ -290,14 +291,23 @@ void update(int time)
 				node = parent;
 			}
 
+			// aiMatrix4x4 p = product;
+
+			// cout << " " << p.a1 << " " << p.a2 << " " << p.a3 << " " << p.a4 << " " << endl;
+			// cout << " " << p.b1 << " " << p.b2 << " " << p.b3 << " " << p.b4 << " " << endl;
+			// cout << " " << p.c1 << " " << p.c2 << " " << p.c3 << " " << p.c4 << " " << endl;
+			// cout << " " << p.d1 << " " << p.d2 << " " << p.d3 << " " << p.d4 << " " << endl;
+
 			for (int k = 0; k < bone->mNumWeights; k++) {
 				int vertexId = bone->mWeights[k].mVertexId;
+				float weight = bone->mWeights[k].mWeight;
 
 				OriginalMesh orig = all_meshes[i];
-				mesh->mVertices[vertexId] = product * orig.verts[vertexId];
+				mesh->mVertices[vertexId] += weight * (product * orig.verts[vertexId]);
 
-				aiMatrix4x4 productTranspose = product.Transpose();
-				mesh->mNormals[vertexId] = productTranspose * orig.norms[vertexId];
+				product.Transpose();
+				mesh->mNormals[vertexId] += weight * (product * orig.norms[vertexId]);
+				product.Transpose();
 			}
 		}
 	}
@@ -378,5 +388,6 @@ int main(int argc, char** argv)
 	glutMainLoop();
 
 	aiReleaseImport(scene);
+	aiReleaseImport(scene2);
 }
 
