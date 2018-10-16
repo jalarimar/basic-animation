@@ -251,7 +251,7 @@ void update(int time)
 	double ticksPerSec = anim->mTicksPerSecond;
 	int tick = (time * ticksPerSec) / 1000;
 
-	tick = 0;
+	//tick = 0;
 
 	if (tick < anim->mDuration) {
 		for (int i = 0; i < anim->mNumChannels; i++) {
@@ -292,7 +292,6 @@ void update(int time)
 			}
 
 			// aiMatrix4x4 p = product;
-
 			// cout << " " << p.a1 << " " << p.a2 << " " << p.a3 << " " << p.a4 << " " << endl;
 			// cout << " " << p.b1 << " " << p.b2 << " " << p.b3 << " " << p.b4 << " " << endl;
 			// cout << " " << p.c1 << " " << p.c2 << " " << p.c3 << " " << p.c4 << " " << endl;
@@ -300,14 +299,20 @@ void update(int time)
 
 			for (int k = 0; k < bone->mNumWeights; k++) {
 				int vertexId = bone->mWeights[k].mVertexId;
-				float weight = bone->mWeights[k].mWeight;
+				float weight = 1;//bone->mWeights[k].mWeight;
 
 				OriginalMesh orig = all_meshes[i];
-				mesh->mVertices[vertexId] += weight * (product * orig.verts[vertexId]);
+				aiVector3D position = orig.verts[vertexId];
+				aiVector3D normal = orig.norms[vertexId];
+				
+				aiMatrix4x4 inverseTransposeProduct = product;
+				inverseTransposeProduct.Inverse().Transpose();
 
-				product.Transpose();
-				mesh->mNormals[vertexId] += weight * (product * orig.norms[vertexId]);
-				product.Transpose();
+				aiTransformVecByMatrix4(&position, &product);
+				aiTransformVecByMatrix4(&normal, &inverseTransposeProduct);				
+				
+				mesh->mVertices[vertexId] = weight * position;
+				mesh->mNormals[vertexId] = weight * normal;
 			}
 		}
 	}
