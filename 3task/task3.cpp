@@ -25,8 +25,6 @@ aiVector3D scene_min, scene_max;
 bool modelRotn = true;
 std::map<int, int> texIdMap;
 
-const aiScene* scene2 = NULL;
-
 aiVector3D rootPos;
 
 typedef struct original_mesh {
@@ -49,16 +47,6 @@ bool loadModel(const char* fileName)
 	get_bounding_box(scene, &scene_min, &scene_max);
 	return true;
 }
-
-void loadAnimations(const char* fileName) {
-	scene2 = aiImportFile(fileName, aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone);
-	if(scene2 == NULL) exit(1);
-	// printSceneInfo(scene2);
-	// printTreeInfo(scene2->mRootNode);
-	// printBoneInfo(scene2);
-	// printAnimInfo(scene2);
-}
-
 
 void loadGLTextures(const aiScene* scene)
 {
@@ -193,8 +181,7 @@ void initialise()
 	glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 	glEnable(GL_COLOR_MATERIAL);
-	loadModel("mannequin.fbx");			//<<<-------------Specify input file name here
-	loadAnimations("jump.fbx");
+	loadModel("wuson.x");			//<<<-------------Specify input file name here
 	//loadGLTextures(scene);        //<<<-------------Uncomment when implementing texturing
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -247,22 +234,25 @@ aiVector3D lerpPosition(aiNodeAnim* channel, int tick) {
 //----Timer callback ----
 void update(int time)
 {
-	aiAnimation* anim = scene2->mAnimations[0];
+	aiAnimation* anim = scene->mAnimations[0]; // todo wuson has 2 animations in the file - key to toggle
 	double ticksPerSec = anim->mTicksPerSecond;
-	int tick = (time * ticksPerSec) / 1000;
-
-	//tick = 200;
-
-	if (tick < anim->mDuration) {
+	int tick = (time * ticksPerSec) / 1000; // 200 to inf, incr by 48, ticksPerSec = 4800
+	//cout << time << endl;
+	
+	if (tick < anim->mDuration) { // 4640 divide 160 time between keys = 29 keys + 1 startpos
 		for (int i = 0; i < anim->mNumChannels; i++) {
 			aiNodeAnim* channel = anim->mChannels[i];
+			cout << channel->mNodeName.C_Str() << " : " << channel->mRotationKeys[0].mTime << endl;
+			cout << channel->mNodeName.C_Str() << " : " << channel->mRotationKeys[1].mTime << endl;
+
 
 			aiVector3D posn = channel->mPositionKeys[0].mValue;
-			if (channel->mNumPositionKeys > 1) {
+			if (channel->mNumPositionKeys > 1) { // 30 for skeleton, 1 for others
 				//posn = lerpPosition(channel, tick); 
 				posn = channel->mPositionKeys[tick].mValue;
 				rootPos = posn;
 			}
+			// mNumRotationKeys either 1, 28, 29, 30
 			aiQuaternion rotn = channel->mRotationKeys[tick].mValue; //lerpRotation(channel, tick);
 
 			aiMatrix4x4 matPos;
@@ -393,6 +383,5 @@ int main(int argc, char** argv)
 	glutMainLoop();
 
 	aiReleaseImport(scene);
-	aiReleaseImport(scene2);
 }
 
