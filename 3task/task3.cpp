@@ -231,29 +231,43 @@ aiVector3D lerpPosition(aiNodeAnim* channel, int tick) {
 	return out;
 }
 
+aiQuaternion interpolate_rotn(aiNodeAnim* channel, int t, int index) {
+	aiQuaternion rotn1 = (channel->mRotationKeys[index-1]).mValue;
+	aiQuaternion rotn2 = (channel->mRotationKeys[index]).mValue;
+	double time1 = (channel->mRotationKeys[index-1]).mTime;
+	double time2 = (channel->mRotationKeys[index]).mTime;
+	double factor = (t-time1)/(time2-time1);
+	aiQuaternion out;
+	aiQuaternion::Interpolate(out, rotn1, rotn2, factor);
+	return out; //.Normalize();
+}
+
 //----Timer callback ----
 void update(int time)
 {
 	aiAnimation* anim = scene->mAnimations[0]; // todo wuson has 2 animations in the file - key to toggle
 	double ticksPerSec = anim->mTicksPerSecond;
-	int tick = (time * ticksPerSec) / 1000; // 200 to inf, incr by 48, ticksPerSec = 4800
-	//cout << time << endl;
+	int tick = (time * ticksPerSec) / 1000; // 48 to inf, incr by 48, ticksPerSec = 4800
+	// todo mod tick
+	int index = 1;//tick / (anim->mDuration / 29); //only works for index 1
+	//cout << index << endl;
 	
 	if (tick < anim->mDuration) { // 4640 divide 160 time between keys = 29 keys + 1 startpos
 		for (int i = 0; i < anim->mNumChannels; i++) {
 			aiNodeAnim* channel = anim->mChannels[i];
-			cout << channel->mNodeName.C_Str() << " : " << channel->mRotationKeys[0].mTime << endl;
-			cout << channel->mNodeName.C_Str() << " : " << channel->mRotationKeys[1].mTime << endl;
-
+			cout << channel->mNodeName.C_Str() << " : " << channel->mNumRotationKeys << endl;
 
 			aiVector3D posn = channel->mPositionKeys[0].mValue;
 			if (channel->mNumPositionKeys > 1) { // 30 for skeleton, 1 for others
-				//posn = lerpPosition(channel, tick); 
-				posn = channel->mPositionKeys[tick].mValue;
+				posn = channel->mPositionKeys[index].mValue;
 				rootPos = posn;
 			}
 			// mNumRotationKeys either 1, 28, 29, 30
-			aiQuaternion rotn = channel->mRotationKeys[tick].mValue; //lerpRotation(channel, tick);
+			// interpolate_rotn(channel, tick, index);
+			aiQuaternion rotn = channel->mRotationKeys[index].mValue; // should be 0
+			if (channel->mNumRotationKeys > 1) {
+				rotn = channel->mRotationKeys[index].mValue;
+			}
 
 			aiMatrix4x4 matPos;
 			matPos.Translation(posn, matPos);
@@ -295,14 +309,11 @@ void update(int time)
 				aiVector3D position = orig.verts[vertexId];
 				aiVector3D normal = orig.norms[vertexId];
 				
-				aiMatrix4x4 inverseTransposeProduct = product;
-				inverseTransposeProduct.Inverse().Transpose();
-
-				aiTransformVecByMatrix4(&position, &product);
-				aiTransformVecByMatrix4(&normal, &inverseTransposeProduct);				
+				aiMatrix4x4 transposeProduct = product;
+				transposeProduct.Transpose();		
 				
-				mesh->mVertices[vertexId] = weight * position;
-				mesh->mNormals[vertexId] = weight * normal;
+				mesh->mVertices[vertexId] = weight * (product * position);
+				mesh->mNormals[vertexId] = weight * (transposeProduct * normal);
 			}
 		}
 	}
