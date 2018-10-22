@@ -194,7 +194,7 @@ void initialise()
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 	glEnable(GL_COLOR_MATERIAL);
 	loadModel("mannequin.fbx");			//<<<-------------Specify input file name here
-	loadAnimations("walk.fbx"); // todo walk segfault
+	loadAnimations("run.fbx");
 	//loadGLTextures(scene);        //<<<-------------Uncomment when implementing texturing
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -218,7 +218,7 @@ void initialise()
 	}
 }
 
-aiVector3D interpolate_position(aiNodeAnim* channel, int tick) {
+aiVector3D interpolate_position(aiNodeAnim* channel, double tick) {
 	int index;
 	for (int i=0; i < channel->mNumPositionKeys; i++) {
 		if (tick < channel->mPositionKeys[i].mTime) {
@@ -236,7 +236,7 @@ aiVector3D interpolate_position(aiNodeAnim* channel, int tick) {
 	return out;
 }
 
-aiQuaternion interpolate_rotn(aiNodeAnim* channel, int tick) {
+aiQuaternion interpolate_rotn(aiNodeAnim* channel, double tick) {
 	int index;
 	for (int i=0; i < channel->mNumRotationKeys; i++) {
 		if (tick < channel->mRotationKeys[i].mTime) {
@@ -258,11 +258,11 @@ aiQuaternion interpolate_rotn(aiNodeAnim* channel, int tick) {
 //----Timer callback ----
 void update(int time)
 {
-	aiAnimation* anim = scene2->mAnimations[0]; // todo wuson has 2 animations in the file - key to toggle
+	aiAnimation* anim = scene2->mAnimations[0]; // todo key to toggle anims
 	double ticksPerSec = anim->mTicksPerSecond;
-	int tick = (time * ticksPerSec) / 1000; // 48 to inf, incr by 48, ticksPerSec = 4800
+	double tick = (time * ticksPerSec) / 1000; // 48 to inf, incr by 48, ticksPerSec = 4800
 	tick = fmod(tick, anim->mDuration);
-	
+
 	if (tick < anim->mDuration) { // 4640 divide 160 time between keys = 29 keys + 1 startpos
 		for (int i = 0; i < anim->mNumChannels; i++) {
 			aiNodeAnim* channel = anim->mChannels[i];
