@@ -218,52 +218,66 @@ void initialise()
 	}
 }
 
-aiQuaternion lerpRotation(aiNodeAnim* channel, int tick) {
-	int nextTick = tick + 1;
+aiVector3D interpolate_position(aiNodeAnim* channel, int tick) {
+	int index;
+	for (int i=0; i < channel->mNumPositionKeys; i++) {
+		if (tick < channel->mPositionKeys[i].mTime) {
+			index = i;
+			break;
+		}
+	}
 
-	float deltaTime = channel->mRotationKeys[nextTick].mTime - channel->mRotationKeys[tick].mTime;
-    float factor = (tick - (float)channel->mRotationKeys[tick].mTime) / deltaTime;
-	
-	aiQuaternion startRot = channel->mRotationKeys[tick].mValue;
-	aiQuaternion endRot = channel->mRotationKeys[nextTick].mValue;
-	aiQuaternion out;
-	aiQuaternion::Interpolate(out, startRot, endRot, factor);
-	return out.Normalize();
+	aiVector3D startPos = (channel->mPositionKeys[index-1]).mValue;
+	aiVector3D endPos = (channel->mPositionKeys[index]).mValue;
+	double time1 = (channel->mPositionKeys[index-1]).mTime;
+	double time2 = (channel->mPositionKeys[index]).mTime;
+	float factor = (tick-time1)/(time2-time1);
+	aiVector3D out = startPos + factor * (endPos - startPos);
+	return out;
 }
 
-aiVector3D lerpPosition(aiNodeAnim* channel, int tick) {
-	int nextTick = tick + 1;
+aiQuaternion interpolate_rotn(aiNodeAnim* channel, int tick) {
+	int index;
+	for (int i=0; i < channel->mNumRotationKeys; i++) {
+		if (tick < channel->mRotationKeys[i].mTime) {
+			index = i;
+			break;
+		}
+	}
 
-	float deltaTime = channel->mPositionKeys[nextTick].mTime - channel->mPositionKeys[tick].mTime;
-    float factor = (tick - (float)channel->mPositionKeys[tick].mTime) / deltaTime;
-	
-	aiVector3D startPos = channel->mPositionKeys[tick].mValue;
-	aiVector3D endPos = channel->mPositionKeys[nextTick].mValue;
-	aiVector3D delta = endPos - startPos;
-	aiVector3D out = startPos + factor * delta;
-	return out;
+	aiQuaternion rotn1 = (channel->mRotationKeys[index-1]).mValue;
+	aiQuaternion rotn2 = (channel->mRotationKeys[index]).mValue;
+	double time1 = (channel->mRotationKeys[index-1]).mTime;
+	double time2 = (channel->mRotationKeys[index]).mTime;
+	double factor = (tick-time1)/(time2-time1);
+	aiQuaternion out;
+	aiQuaternion::Interpolate(out, rotn1, rotn2, factor);
+	return out.Normalize();
 }
 
 //----Timer callback ----
 void update(int time)
 {
-	aiAnimation* anim = scene2->mAnimations[0];
+	aiAnimation* anim = scene2->mAnimations[0]; // todo wuson has 2 animations in the file - key to toggle
 	double ticksPerSec = anim->mTicksPerSecond;
-	int tick = (time * ticksPerSec) / 1000;
-
-	//tick = 200;
-
-	if (tick < anim->mDuration) {
+	int tick = (time * ticksPerSec) / 1000; // 48 to inf, incr by 48, ticksPerSec = 4800
+	tick = fmod(tick, anim->mDuration);
+	
+	if (tick < anim->mDuration) { // 4640 divide 160 time between keys = 29 keys + 1 startpos
 		for (int i = 0; i < anim->mNumChannels; i++) {
 			aiNodeAnim* channel = anim->mChannels[i];
+			//cout << channel->mNodeName.C_Str() << " : " << channel->mNumRotationKeys << endl;
 
 			aiVector3D posn = channel->mPositionKeys[0].mValue;
-			if (channel->mNumPositionKeys > 1) {
-				//posn = lerpPosition(channel, tick); 
-				posn = channel->mPositionKeys[tick].mValue;
+			if (channel->mNumPositionKeys > 1) { // 30 for skeleton, 1 for others
+				posn = interpolate_position(channel, tick);
 				rootPos = posn;
 			}
-			aiQuaternion rotn = channel->mRotationKeys[tick].mValue; //lerpRotation(channel, tick);
+			// mNumRotationKeys either 1, 28, 29, 30
+			aiQuaternion rotn = channel->mRotationKeys[0].mValue; // should be 0
+			if (channel->mNumRotationKeys > 1) {
+				rotn = interpolate_rotn(channel, tick);
+			}
 
 			aiMatrix4x4 matPos;
 			matPos.Translation(posn, matPos);
@@ -277,6 +291,11 @@ void update(int time)
 
 	for (int i = 0; i < scene->mNumMeshes; i++) {
 		aiMesh* mesh = scene->mMeshes[i];
+		for (int v; v < mesh->mNumVertices; v++) {
+			mesh->mVertices[v] = aiVector3D(0);
+			mesh->mNormals[v] = aiVector3D(0);
+		}
+
 		for (int j = 0; j < mesh->mNumBones; j++) {
 			aiBone* bone = mesh->mBones[j];
 			aiMatrix4x4 offset = bone->mOffsetMatrix;
@@ -296,23 +315,19 @@ void update(int time)
 			// cout << " " << p.b1 << " " << p.b2 << " " << p.b3 << " " << p.b4 << " " << endl;
 			// cout << " " << p.c1 << " " << p.c2 << " " << p.c3 << " " << p.c4 << " " << endl;
 			// cout << " " << p.d1 << " " << p.d2 << " " << p.d3 << " " << p.d4 << " " << endl;
+			aiMatrix4x4 transposeProduct = product;
+			transposeProduct.Transpose();	
 
 			for (int k = 0; k < bone->mNumWeights; k++) {
 				int vertexId = bone->mWeights[k].mVertexId;
-				float weight = 1;//bone->mWeights[k].mWeight;
+				float weight = 1;// bone->mWeights[k].mWeight;
 
 				OriginalMesh orig = all_meshes[i];
 				aiVector3D position = orig.verts[vertexId];
 				aiVector3D normal = orig.norms[vertexId];
 				
-				aiMatrix4x4 inverseTransposeProduct = product;
-				inverseTransposeProduct.Inverse().Transpose();
-
-				aiTransformVecByMatrix4(&position, &product);
-				aiTransformVecByMatrix4(&normal, &inverseTransposeProduct);				
-				
-				mesh->mVertices[vertexId] = weight * position;
-				mesh->mNormals[vertexId] = weight * normal;
+				mesh->mVertices[vertexId] = weight * (product * position);
+				mesh->mNormals[vertexId] = weight * (transposeProduct * normal);
 			}
 		}
 	}
@@ -341,18 +356,18 @@ void display()
 	glLightfv(GL_LIGHT0, GL_POSITION, pos);
 
 	// scale the whole asset to fit into our view frustum 
-	float tmp = scene_max.x - scene_min.x;
-	tmp = aisgl_max(scene_max.y - scene_min.y,tmp);
-	tmp = aisgl_max(scene_max.z - scene_min.z,tmp);
-	tmp = 1.f / tmp;
-	glScalef(tmp, tmp, tmp);
+	// float tmp = scene_max.x - scene_min.x;
+	// tmp = aisgl_max(scene_max.y - scene_min.y,tmp);
+	// tmp = aisgl_max(scene_max.z - scene_min.z,tmp);
+	// tmp = 1.f / tmp;
+	// glScalef(tmp, tmp, tmp);
 
 	float rx = rootPos.x; 
 	float ry = rootPos.y;
 	float rz = rootPos.z;
 
-	gluLookAt(-700 + rx, 1300 + ry, -700 + rz, rx, ry, rz, 0, 1, 0);
-
+	//gluLookAt(-700 + rx, 1300 + ry, -700 + rz, rx, ry, rz, 0, 1, 0);
+	gluLookAt(0, 100, -600, 0, 0, -5, 0, 1, 0);
 	// floor
 	// glColor4f(1, 0, 0, 1.0);  //red
 	// glNormal3f(0.0, 1.0, 0.0);

@@ -182,31 +182,44 @@ void initialise()
 	gluPerspective(45, 1, 1.0, 1000.0);
 }
 
-aiQuaternion lerpRotation(aiNodeAnim* channel, int tick) {
-	int nextTick = tick + 1;
 
-	float deltaTime = channel->mRotationKeys[nextTick].mTime - channel->mRotationKeys[tick].mTime;
-    float factor = (tick - (float)channel->mRotationKeys[tick].mTime) / deltaTime;
-	
-	aiQuaternion startRot = channel->mRotationKeys[tick].mValue;
-	aiQuaternion endRot = channel->mRotationKeys[nextTick].mValue;
+aiVector3D interpolate_position(aiNodeAnim* channel, int tick) {
+	int index;
+	for (int i=0; i < channel->mNumPositionKeys; i++) {
+		if (tick < channel->mPositionKeys[i].mTime) {
+			index = i;
+			break;
+		}
+	}
+
+	aiVector3D startPos = (channel->mPositionKeys[index-1]).mValue;
+	aiVector3D endPos = (channel->mPositionKeys[index]).mValue;
+	double time1 = (channel->mPositionKeys[index-1]).mTime;
+	double time2 = (channel->mPositionKeys[index]).mTime;
+	float factor = (tick-time1)/(time2-time1);
+	aiVector3D out = startPos + factor * (endPos - startPos);
+	return out;
+}
+
+aiQuaternion interpolate_rotn(aiNodeAnim* channel, int tick) {
+	int index;
+	for (int i=0; i < channel->mNumRotationKeys; i++) {
+		if (tick < channel->mRotationKeys[i].mTime) {
+			index = i;
+			break;
+		}
+	}
+
+	aiQuaternion rotn1 = (channel->mRotationKeys[index-1]).mValue;
+	aiQuaternion rotn2 = (channel->mRotationKeys[index]).mValue;
+	double time1 = (channel->mRotationKeys[index-1]).mTime;
+	double time2 = (channel->mRotationKeys[index]).mTime;
+	double factor = (tick-time1)/(time2-time1);
 	aiQuaternion out;
-	aiQuaternion::Interpolate(out, startRot, endRot, factor);
+	aiQuaternion::Interpolate(out, rotn1, rotn2, factor);
 	return out.Normalize();
 }
 
-aiVector3D lerpPosition(aiNodeAnim* channel, int tick) {
-	int nextTick = tick + 1;
-
-	float deltaTime = channel->mPositionKeys[nextTick].mTime - channel->mPositionKeys[tick].mTime;
-    float factor = (tick - (float)channel->mPositionKeys[tick].mTime) / deltaTime;
-	
-	aiVector3D startPos = channel->mPositionKeys[tick].mValue;
-	aiVector3D endPos = channel->mPositionKeys[nextTick].mValue;
-	aiVector3D delta = endPos - startPos;
-	aiVector3D out = startPos + factor * delta;
-	return out;
-}
 
 aiVector3D rootPos;
 //----Timer callback ----
@@ -216,17 +229,18 @@ void update(int time)
 	double ticksPerSec = anim->mTicksPerSecond;
 	int tick = (time * ticksPerSec) / 1000;
 
+	tick = fmod(tick, anim->mDuration);
+
 	if (tick < anim->mDuration) {
 		for (int i = 0; i < anim->mNumChannels; i++) {
 			aiNodeAnim* channel = anim->mChannels[i];
 
 			aiVector3D posn = channel->mPositionKeys[0].mValue;
 			if (channel->mNumPositionKeys > 1) {
-				//posn = lerpPosition(channel, tick); 
-				posn = channel->mPositionKeys[tick].mValue;
+				posn = interpolate_position(channel, tick);
 				rootPos = posn;
 			}
-			aiQuaternion rotn = lerpRotation(channel, tick);
+			aiQuaternion rotn = interpolate_rotn(channel, tick);
 
 			aiMatrix4x4 matPos;
 			matPos.Translation(posn, matPos);
@@ -247,6 +261,43 @@ void keyboard(unsigned char key, int x, int y)
 {
 	if(key == '1') modelRotn = !modelRotn;   //Enable/disable initial model rotation
 	glutPostRedisplay();
+}
+
+void post() {
+	glPushMatrix();
+		glutSolidCube(1);
+	glPopMatrix();
+}
+
+void board() {
+	glPushMatrix();
+		glTranslatef(-25, 14, 200);
+		glScalef(50, 1.5, 0.5);
+		glutSolidCube(1);
+		glTranslatef(0, -3, 0);
+		glScalef(1, 0.5, 1);
+		glutSolidCube(1);
+	glPopMatrix();
+}
+
+void wall() {
+	post();
+	board();
+	glPushMatrix();
+		glTranslatef(-50, 0, 0);
+		post();
+		board();
+	glPopMatrix();
+	glPushMatrix();
+		glTranslatef(-100, 0, 0);
+		post();
+		board();
+	glPopMatrix();
+	glPushMatrix();
+		glTranslatef(-150, 0, 0);
+		post();
+		board();
+	glPopMatrix();
 }
 
 //------The main display function---------
@@ -290,7 +341,15 @@ void display()
 		glVertex3f(xmax, y, zmin);
 	glEnd();
 
-	// TODO posts around the boxing ring
+	glPushMatrix();
+		wall();
+		glRotatef(90, 0, 1, 0);
+		wall();
+		glRotatef(90, 0, 1, 0);
+		wall();
+		glRotatef(90, 0, 1, 0);
+		wall();
+	glPopMatrix();
 
 	glColor4f(0.4, 0.4, 0.4, 1.0);
 	render(scene, scene->mRootNode);
