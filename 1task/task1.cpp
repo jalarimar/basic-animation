@@ -167,7 +167,7 @@ void render (const aiScene* sc, const aiNode* nd)
 //--------------------OpenGL initialization------------------------
 void initialise()
 {
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.9f, 0.9f, 0.9f, 1.0f);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_DEPTH_TEST);
@@ -273,6 +273,7 @@ void post() {
 }
 
 void board() {
+	glColor4f(0, 0, 1, 1.0);  //blue
 	glPushMatrix();
 		glTranslatef(0, 50, 150);
 		glScalef(300, 2.5, 1);
@@ -280,6 +281,7 @@ void board() {
 		glTranslatef(0, -10, 0);
 		glutSolidCube(1);
 	glPopMatrix();
+	glColor4f(1, 0, 0, 1.0);  //red
 }
 
 void wall() {
@@ -338,7 +340,7 @@ void display()
 		wall();
 	glPopMatrix();
 
-	glColor4f(0.4, 0.4, 0.4, 1.0);
+	glColor4f(0.4, 0.7, 0.1, 1.0); //green
 	render(scene, scene->mRootNode);
 	
 	glutSwapBuffers();

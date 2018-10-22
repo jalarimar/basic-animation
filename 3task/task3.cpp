@@ -248,7 +248,7 @@ aiQuaternion interpolate_rotn(aiNodeAnim* channel, int tick) {
 	double factor = (tick-time1)/(time2-time1);
 	aiQuaternion out;
 	aiQuaternion::Interpolate(out, rotn1, rotn2, factor);
-	return out.Normalize();
+	return out;
 }
 
 //----Timer callback ----
@@ -306,11 +306,6 @@ void update(int time)
 				node = parent;
 			}
 
-			// aiMatrix4x4 p = product;
-			// cout << " " << p.a1 << " " << p.a2 << " " << p.a3 << " " << p.a4 << " " << endl;
-			// cout << " " << p.b1 << " " << p.b2 << " " << p.b3 << " " << p.b4 << " " << endl;
-			// cout << " " << p.c1 << " " << p.c2 << " " << p.c3 << " " << p.c4 << " " << endl;
-			// cout << " " << p.d1 << " " << p.d2 << " " << p.d3 << " " << p.d4 << " " << endl;
 			aiMatrix4x4 transposeProduct = product;
 			transposeProduct.Transpose();	
 

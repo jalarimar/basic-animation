@@ -125,9 +125,9 @@ void render (const aiScene* sc, const aiNode* nd)
 	GLuint texId;
 	int meshIndex, materialIndex;
 
-	aiTransposeMatrix4(&m);   //Convert to column-major order
-	glPushMatrix();
-	glMultMatrixf((float*)&m);   //Multiply by the transformation matrix for this node
+	//aiTransposeMatrix4(&m);   //Convert to column-major order
+	//glPushMatrix();
+	//glMultMatrixf((float*)&m);   //Multiply by the transformation matrix for this node
 
 	// Draw all meshes assigned to this node
 	for (int n = 0; n < nd->mNumMeshes; n++)
@@ -179,13 +179,13 @@ void render (const aiScene* sc, const aiNode* nd)
 	for (int i = 0; i < nd->mNumChildren; i++)
 		render(sc, nd->mChildren[i]);
 
-	glPopMatrix();
+	//glPopMatrix();
 }
 
 //--------------------OpenGL initialization------------------------
 void initialise()
 {
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.0f, 0.3f, 0.0f, 1.0f);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_DEPTH_TEST);
@@ -194,7 +194,7 @@ void initialise()
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 	glEnable(GL_COLOR_MATERIAL);
 	loadModel("mannequin.fbx");			//<<<-------------Specify input file name here
-	loadAnimations("jump.fbx");
+	loadAnimations("walk.fbx"); // todo walk segfault
 	//loadGLTextures(scene);        //<<<-------------Uncomment when implementing texturing
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -252,7 +252,7 @@ aiQuaternion interpolate_rotn(aiNodeAnim* channel, int tick) {
 	double factor = (tick-time1)/(time2-time1);
 	aiQuaternion out;
 	aiQuaternion::Interpolate(out, rotn1, rotn2, factor);
-	return out.Normalize();
+	return out;
 }
 
 //----Timer callback ----
@@ -270,8 +270,8 @@ void update(int time)
 
 			aiVector3D posn = channel->mPositionKeys[0].mValue;
 			if (channel->mNumPositionKeys > 1) { // 30 for skeleton, 1 for others
-				posn = interpolate_position(channel, tick);
-				rootPos = posn;
+				posn = aiVector3D(0, -3, -5.0); //interpolate_position(channel, tick);
+				rootPos = aiVector3D(0, -3, -5.0);
 			}
 			// mNumRotationKeys either 1, 28, 29, 30
 			aiQuaternion rotn = channel->mRotationKeys[0].mValue; // should be 0
@@ -310,11 +310,6 @@ void update(int time)
 				node = parent;
 			}
 
-			// aiMatrix4x4 p = product;
-			// cout << " " << p.a1 << " " << p.a2 << " " << p.a3 << " " << p.a4 << " " << endl;
-			// cout << " " << p.b1 << " " << p.b2 << " " << p.b3 << " " << p.b4 << " " << endl;
-			// cout << " " << p.c1 << " " << p.c2 << " " << p.c3 << " " << p.c4 << " " << endl;
-			// cout << " " << p.d1 << " " << p.d2 << " " << p.d3 << " " << p.d4 << " " << endl;
 			aiMatrix4x4 transposeProduct = product;
 			transposeProduct.Transpose();	
 
@@ -355,28 +350,31 @@ void display()
 	glLoadIdentity();
 	glLightfv(GL_LIGHT0, GL_POSITION, pos);
 
+	//get_bounding_box(scene, &scene_min, &scene_max);
+
 	// scale the whole asset to fit into our view frustum 
-	float tmp = scene_max.x - scene_min.x;
-	tmp = aisgl_max(scene_max.y - scene_min.y,tmp);
-	tmp = aisgl_max(scene_max.z - scene_min.z,tmp);
-	tmp = 1.f / tmp;
-	glScalef(tmp, tmp, tmp);
+	// float tmp = scene_max.x - scene_min.x;
+	// tmp = aisgl_max(scene_max.y - scene_min.y,tmp);
+	// tmp = aisgl_max(scene_max.z - scene_min.z,tmp);
+	// tmp = 1.f / tmp;
+	// glScalef(tmp, tmp, tmp);
 
 	float rx = rootPos.x; 
 	float ry = rootPos.y;
 	float rz = rootPos.z;
-	cout << rx << " " << ry << " " << rz << endl;
+	//cout << rx << " " << ry << " " << rz << endl;
 
-	gluLookAt(0, 0, 0, rx, ry, rz, 0, 1, 0);
+	gluLookAt(rx, ry + 10, rz + 15, rx, ry, rz, 0, 1, 0);
+
 	// floor
-	glColor4f(1, 0, 0, 1.0);  //red
+	glColor4f(0.1, 0.6, 0.1, 0);  //green
 	glNormal3f(0.0, 1.0, 0.0);
 
 	glBegin(GL_QUADS);
-		int xmin = -100;
-		int xmax = 150;
-		int zmin = -100;
-		int zmax = 150;
+		int xmin = -10;
+		int xmax = 10;
+		int zmin = -60;
+		int zmax = 10;
 		int y = -5;
 		glVertex3f(xmin, y, zmin);
 		glVertex3f(xmin, y, zmax);
@@ -384,9 +382,7 @@ void display()
 		glVertex3f(xmax, y, zmin);
 	glEnd();
 
-	// TODO posts around the boxing ring
-
-	glColor4f(0.4, 0.4, 0.4, 1.0);
+	glColor4f(0.4, 0.4, 0.9, 1.0);
 	render(scene, scene->mRootNode);
 	
 	glutSwapBuffers();
