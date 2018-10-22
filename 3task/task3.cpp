@@ -65,8 +65,9 @@ void loadGLTextures(const aiScene* scene)
 	{
 		aiString path;  // filename
 
-		if (scene->mMaterials[m]->GetTexture(aiTextureType_DIFFUSE, 0, &path) == AI_SUCCESS)
-		{
+		// if (scene->mMaterials[m]->GetTexture(aiTextureType_DIFFUSE, 0, &path) == AI_SUCCESS)
+		// {
+			path = "./fur.jpeg";
 			glEnable(GL_TEXTURE_2D);
 			ILuint imageId;
 			GLuint texId;
@@ -99,7 +100,9 @@ void loadGLTextures(const aiScene* scene)
 			{
 				cout << "Couldn't load Image: %s\n" << path.data << endl;
 			}
-		}
+		// } else {
+		// 	cout << "load failed" << endl;
+		// }
 	}  //loop for material
 }
 
@@ -129,6 +132,11 @@ void render (const aiScene* sc, const aiNode* nd)
 		else
 			glDisable(GL_LIGHTING);
 
+		if (mesh->HasTextureCoords(0)) {
+			glEnable(GL_TEXTURE_2D);
+			int texId = texIdMap[meshIndex];
+			glBindTexture(GL_TEXTURE_2D, texId);
+		}
 
 		//Get the polygons from each mesh and draw them
 		for (int k = 0; k < mesh->mNumFaces; k++)
@@ -152,10 +160,11 @@ void render (const aiScene* sc, const aiNode* nd)
 				if(mesh->HasVertexColors(0))
 					glColor4fv((GLfloat*)&mesh->mColors[0][vertexIndex]);
 
-
 				if (mesh->HasNormals())
 					glNormal3fv(&mesh->mNormals[vertexIndex].x);
 
+				glTexCoord2f(mesh->mTextureCoords[0][vertexIndex].x,
+							mesh->mTextureCoords[0][vertexIndex].y);
 				glVertex3fv(&mesh->mVertices[vertexIndex].x);
 			}
 
@@ -182,7 +191,7 @@ void initialise()
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 	glEnable(GL_COLOR_MATERIAL);
 	loadModel("wuson.x");			//<<<-------------Specify input file name here
-	//loadGLTextures(scene);        //<<<-------------Uncomment when implementing texturing
+	loadGLTextures(scene);        //<<<-------------Uncomment when implementing texturing
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	gluPerspective(45, 1, 1.0, 1000.0);
@@ -353,30 +362,29 @@ void display()
 	float ry = rootPos.y;
 	float rz = rootPos.z;
 
-	//gluLookAt(-700 + rx, 1300 + ry, -700 + rz, rx, ry, rz, 0, 1, 0);
-	gluLookAt(0, 0, 6, 0, 0, -5, 0, 1, 0);
+	gluLookAt(-3, 3, 7, rx, ry, rz, 0, 1, 0);
 
-	glRotatef(90, 1, 0, 0);
-	glRotatef(90, 0, 0, 1);
 	// floor
-	// glColor4f(1, 0, 0, 1.0);  //red
-	// glNormal3f(0.0, 1.0, 0.0);
+	glDisable(GL_TEXTURE_2D);
+	glColor4f(0.8, 0.72, 0.6, 1.0); 
+	glNormal3f(0.0, 1.0, 0.0);
 
-	// glBegin(GL_QUADS);
-	// 	int xmin = -100;
-	// 	int xmax = 150;
-	// 	int zmin = -100;
-	// 	int zmax = 150;
-	// 	int y = -5;
-	// 	glVertex3f(xmin, y, zmin);
-	// 	glVertex3f(xmin, y, zmax);
-	// 	glVertex3f(xmax, y, zmax);
-	// 	glVertex3f(xmax, y, zmin);
-	// glEnd();
-
-	// TODO posts around the boxing ring
+	glBegin(GL_QUADS);
+		int xmin = -100;
+		int xmax = 150;
+		int zmin = -100;
+		int zmax = 150;
+		int y = -5;
+		glVertex3f(xmin, y, zmin);
+		glVertex3f(xmin, y, zmax);
+		glVertex3f(xmax, y, zmax);
+		glVertex3f(xmax, y, zmin);
+	glEnd();
 
 	glColor4f(0.4, 0.4, 0.4, 1.0);
+	
+	glRotatef(90, 1, 0, 0);
+	glRotatef(90, 0, 0, 1);
 	render(scene, scene->mRootNode);
 	
 	glutSwapBuffers();
@@ -387,7 +395,7 @@ int main(int argc, char** argv)
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_RGB | GLUT_DOUBLE | GLUT_DEPTH);
 	glutInitWindowSize(600, 600);
-	glutCreateWindow("Task 2");
+	glutCreateWindow("Task 3");
 	glutInitContextVersion (4, 2);
 	glutInitContextProfile ( GLUT_CORE_PROFILE );
 

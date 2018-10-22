@@ -320,7 +320,7 @@ void update(int time)
 
 			for (int k = 0; k < bone->mNumWeights; k++) {
 				int vertexId = bone->mWeights[k].mVertexId;
-				float weight = 1;// bone->mWeights[k].mWeight;
+				float weight = 1;//bone->mWeights[k].mWeight;
 
 				OriginalMesh orig = all_meshes[i];
 				aiVector3D position = orig.verts[vertexId];
@@ -356,33 +356,33 @@ void display()
 	glLightfv(GL_LIGHT0, GL_POSITION, pos);
 
 	// scale the whole asset to fit into our view frustum 
-	// float tmp = scene_max.x - scene_min.x;
-	// tmp = aisgl_max(scene_max.y - scene_min.y,tmp);
-	// tmp = aisgl_max(scene_max.z - scene_min.z,tmp);
-	// tmp = 1.f / tmp;
-	// glScalef(tmp, tmp, tmp);
+	float tmp = scene_max.x - scene_min.x;
+	tmp = aisgl_max(scene_max.y - scene_min.y,tmp);
+	tmp = aisgl_max(scene_max.z - scene_min.z,tmp);
+	tmp = 1.f / tmp;
+	glScalef(tmp, tmp, tmp);
 
 	float rx = rootPos.x; 
 	float ry = rootPos.y;
 	float rz = rootPos.z;
+	cout << rx << " " << ry << " " << rz << endl;
 
-	//gluLookAt(-700 + rx, 1300 + ry, -700 + rz, rx, ry, rz, 0, 1, 0);
-	gluLookAt(0, 100, -600, 0, 0, -5, 0, 1, 0);
+	gluLookAt(0, 0, 0, rx, ry, rz, 0, 1, 0);
 	// floor
-	// glColor4f(1, 0, 0, 1.0);  //red
-	// glNormal3f(0.0, 1.0, 0.0);
+	glColor4f(1, 0, 0, 1.0);  //red
+	glNormal3f(0.0, 1.0, 0.0);
 
-	// glBegin(GL_QUADS);
-	// 	int xmin = -100;
-	// 	int xmax = 150;
-	// 	int zmin = -100;
-	// 	int zmax = 150;
-	// 	int y = -5;
-	// 	glVertex3f(xmin, y, zmin);
-	// 	glVertex3f(xmin, y, zmax);
-	// 	glVertex3f(xmax, y, zmax);
-	// 	glVertex3f(xmax, y, zmin);
-	// glEnd();
+	glBegin(GL_QUADS);
+		int xmin = -100;
+		int xmax = 150;
+		int zmin = -100;
+		int zmax = 150;
+		int y = -5;
+		glVertex3f(xmin, y, zmin);
+		glVertex3f(xmin, y, zmax);
+		glVertex3f(xmax, y, zmax);
+		glVertex3f(xmax, y, zmin);
+	glEnd();
 
 	// TODO posts around the boxing ring
 

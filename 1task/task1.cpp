@@ -265,17 +265,19 @@ void keyboard(unsigned char key, int x, int y)
 
 void post() {
 	glPushMatrix();
-		glutSolidCube(1);
+		glRotatef(45, 0, 1, 0);
+		glTranslatef(0, 40, 200);
+		glScalef(5, 20, 5);
+		glutSolidCube(5);
 	glPopMatrix();
 }
 
 void board() {
 	glPushMatrix();
-		glTranslatef(-25, 14, 200);
-		glScalef(50, 1.5, 0.5);
+		glTranslatef(0, 50, 150);
+		glScalef(300, 2.5, 1);
 		glutSolidCube(1);
-		glTranslatef(0, -3, 0);
-		glScalef(1, 0.5, 1);
+		glTranslatef(0, -10, 0);
 		glutSolidCube(1);
 	glPopMatrix();
 }
@@ -283,21 +285,6 @@ void board() {
 void wall() {
 	post();
 	board();
-	glPushMatrix();
-		glTranslatef(-50, 0, 0);
-		post();
-		board();
-	glPopMatrix();
-	glPushMatrix();
-		glTranslatef(-100, 0, 0);
-		post();
-		board();
-	glPopMatrix();
-	glPushMatrix();
-		glTranslatef(-150, 0, 0);
-		post();
-		board();
-	glPopMatrix();
 }
 
 //------The main display function---------
@@ -323,16 +310,16 @@ void display()
 	float ry = rootPos.y;
 	float rz = rootPos.z;
 
-	gluLookAt(-250 + rx, 150 + ry, -200 + rz, rx, ry, rz, 0, 1, 0);
+	gluLookAt(-250 + rx, 150 + ry, -350 + rz, rx, ry, rz, 0, 1, 0);
 
 	// floor
 	glColor4f(1, 0, 0, 1.0);  //red
 	glNormal3f(0.0, 1.0, 0.0);
 
 	glBegin(GL_QUADS);
-		int xmin = -100;
+		int xmin = -150;
 		int xmax = 150;
-		int zmin = -100;
+		int zmin = -150;
 		int zmax = 150;
 		int y = -5;
 		glVertex3f(xmin, y, zmin);
