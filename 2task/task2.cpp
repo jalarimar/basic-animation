@@ -359,6 +359,8 @@ void keyboard(unsigned char key, int x, int y)
 	glutPostRedisplay();
 }
 
+float offset = 0;
+
 //------The main display function---------
 //----The model is first drawn using a display list so that all GL commands are
 //    stored for subsequent display updates.
@@ -402,6 +404,49 @@ void display()
 		glVertex3f(xmax, y, zmax);
 		glVertex3f(xmax, y, zmin);
 	glEnd();
+
+	glPushMatrix(); 
+		//glColor4f(0.5, 0.4, 0.3, 1.0); // rocks
+		glColor4f(0, 0.2, 0, 1.0); // bushes
+		glTranslatef(rx + 8, ry, rz - offset);
+		glutSolidSphere(2, 10, 10);
+		glTranslatef(0, 0, 10);
+		glutSolidSphere(2, 10, 10);
+		glTranslatef(0, 0, -20);
+		glutSolidSphere(2, 10, 10);
+		glTranslatef(0, 0, -10);
+		glutSolidSphere(2, 10, 10);
+		glTranslatef(0, 0, -10);
+		glutSolidSphere(2, 10, 10);
+		glTranslatef(0, 0, -10);
+		glutSolidSphere(2, 10, 10);
+		glTranslatef(0, 0, -10);
+		glutSolidSphere(2, 10, 10);
+		// left row
+		glTranslatef(-16, 0, 6);
+		glutSolidSphere(2, 10, 10);
+		glTranslatef(0, 0, 10);
+		glutSolidSphere(2, 10, 10);
+		glTranslatef(0, 0, 10);
+		glutSolidSphere(2, 10, 10);
+		glTranslatef(0, 0, 10);
+		glutSolidSphere(2, 10, 10);
+		glTranslatef(0, 0, 10);
+		glutSolidSphere(2, 10, 10);
+		glTranslatef(0, 0, 10);
+		glutSolidSphere(2, 10, 10);
+	glPopMatrix();
+
+	if (animation == 1) {
+		offset += 0.08;
+	} else if (animation == 2) {
+		offset += 0.3;
+	} else {
+		offset += 0.0;
+	}
+	if (offset >= 10) {
+		offset = 0;
+	}
 
 	glColor4f(0.4, 0.4, 0.9, 1.0);
 	render(scene, scene->mRootNode);
