@@ -392,8 +392,8 @@ void display()
 	glNormal3f(0.0, 1.0, 0.0);
 
 	glBegin(GL_QUADS);
-		int xmin = -10;
-		int xmax = 10;
+		int xmin = -6;
+		int xmax = 6;
 		int zmin = -60;
 		int zmax = 10;
 		int y = -5;

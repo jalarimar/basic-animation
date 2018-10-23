@@ -273,7 +273,7 @@ void post() {
 }
 
 void board() {
-	glColor4f(0, 0, 1, 1.0);  //blue
+	
 	glPushMatrix();
 		glTranslatef(0, 50, 150);
 		glScalef(300, 2.5, 1);
@@ -281,11 +281,12 @@ void board() {
 		glTranslatef(0, -10, 0);
 		glutSolidCube(1);
 	glPopMatrix();
-	glColor4f(1, 0, 0, 1.0);  //red
 }
 
 void wall() {
+	glColor4f(0.6, 0, 0, 1.0);  //red
 	post();
+	glColor4f(0, 0, 1, 1.0);  //blue
 	board();
 }
 
@@ -340,7 +341,7 @@ void display()
 		wall();
 	glPopMatrix();
 
-	glColor4f(0.4, 0.7, 0.1, 1.0); //green
+	glColor4f(0.2, 0.0, 0.0, 1.0); //dark red
 	render(scene, scene->mRootNode);
 	
 	glutSwapBuffers();

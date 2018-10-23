@@ -23,7 +23,7 @@ GLuint scene_list = 0;
 float angle = 0;
 aiVector3D scene_min, scene_max;
 std::map<int, int> texIdMap;
-
+GLuint txId[10];
 int animation = 1;
 aiVector3D rootPos;
 
@@ -67,7 +67,7 @@ void loadGLTextures(const aiScene* scene)
 
 		// if (scene->mMaterials[m]->GetTexture(aiTextureType_DIFFUSE, 0, &path) == AI_SUCCESS)
 		// {
-			path = "./fur.jpeg";
+			path = "./mud.jpg";
 			glEnable(GL_TEXTURE_2D);
 			ILuint imageId;
 			GLuint texId;
@@ -262,7 +262,7 @@ void update(int time)
 	if (tick < anim->mDuration) { // 4640 divide 160 time between keys = 29 keys + 1 startpos
 		for (int i = 0; i < anim->mNumChannels; i++) {
 			aiNodeAnim* channel = anim->mChannels[i];
-			//cout << channel->mNodeName.C_Str() << " : " << channel->mNumRotationKeys << endl;
+			// cout << channel->mNodeName.C_Str() << " : " << channel->mNumRotationKeys << endl;
 
 			aiVector3D posn = channel->mPositionKeys[0].mValue;
 			if (channel->mNumPositionKeys > 1) { // 30 for skeleton, 1 for others
@@ -270,7 +270,7 @@ void update(int time)
 				rootPos = posn;
 			}
 			// mNumRotationKeys either 1, 28, 29, 30
-			aiQuaternion rotn = channel->mRotationKeys[0].mValue; // should be 0
+			aiQuaternion rotn = channel->mRotationKeys[0].mValue;
 			if (channel->mNumRotationKeys > 1) {
 				rotn = interpolate_rotn(channel, tick);
 			}
@@ -339,6 +339,8 @@ void keyboard(unsigned char key, int x, int y)
 	glutPostRedisplay();
 }
 
+float offset = 0;
+
 //------The main display function---------
 //----The model is first drawn using a display list so that all GL commands are
 //    stored for subsequent display updates.
@@ -369,17 +371,26 @@ void display()
 	glColor4f(0.8, 0.72, 0.6, 1.0); 
 	glNormal3f(0.0, 1.0, 0.0);
 
+	glEnable(GL_TEXTURE_2D);
+	int texId = texIdMap[0];
+	glBindTexture(GL_TEXTURE_2D, texId);
+
 	glBegin(GL_QUADS);
 		int xmin = -100;
-		int xmax = 150;
+		int xmax = 100;
 		int zmin = -100;
-		int zmax = 150;
+		int zmax = 100;
 		int y = -5;
-		glVertex3f(xmin, y, zmin);
-		glVertex3f(xmin, y, zmax);
-		glVertex3f(xmax, y, zmax);
-		glVertex3f(xmax, y, zmin);
+		glTexCoord2f(0 + offset, 3.5); glVertex3f(xmin, y, zmin); 
+		glTexCoord2f(0 + offset, 0.5); glVertex3f(xmin, y, zmax);
+		glTexCoord2f(3 + offset, 0.5); glVertex3f(xmax, y, zmax);
+		glTexCoord2f(3 + offset, 3.5); glVertex3f(xmax, y, zmin);
 	glEnd();
+	if (animation == 1) {
+		offset -= 0.00072;
+	} else {
+		offset -= 0.00015;
+	}
 
 	glColor4f(0.4, 0.4, 0.4, 1.0);
 	
