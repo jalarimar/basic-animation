@@ -22,11 +22,13 @@ const aiScene* scene = NULL;
 GLuint scene_list = 0;
 float angle = 0;
 aiVector3D scene_min, scene_max;
-bool modelRotn = true;
 std::map<int, int> texIdMap;
 
+const aiScene* scene1 = NULL;
 const aiScene* scene2 = NULL;
+const aiScene* scene3 = NULL;
 
+int animation = 1;
 aiVector3D rootPos;
 
 typedef struct original_mesh {
@@ -50,9 +52,13 @@ bool loadModel(const char* fileName)
 	return true;
 }
 
-void loadAnimations(const char* fileName) {
-	scene2 = aiImportFile(fileName, aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone);
+void loadAnimations(const char* fileName, const char* fileName2, const char* fileName3) {
+	scene1 = aiImportFile(fileName, aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone);
+	if(scene1 == NULL) exit(1);
+	scene2 = aiImportFile(fileName2, aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone);
 	if(scene2 == NULL) exit(1);
+	scene3 = aiImportFile(fileName3, aiProcessPreset_TargetRealtime_MaxQuality | aiProcess_Debone);
+	if(scene3 == NULL) exit(1);
 	// printSceneInfo(scene2);
 	// printTreeInfo(scene2->mRootNode);
 	// printBoneInfo(scene2);
@@ -194,7 +200,7 @@ void initialise()
 	glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 	glEnable(GL_COLOR_MATERIAL);
 	loadModel("mannequin.fbx");			//<<<-------------Specify input file name here
-	loadAnimations("run.fbx");
+	loadAnimations("walk.fbx", "run.fbx", "jump.fbx");
 	//loadGLTextures(scene);        //<<<-------------Uncomment when implementing texturing
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -258,7 +264,14 @@ aiQuaternion interpolate_rotn(aiNodeAnim* channel, double tick) {
 //----Timer callback ----
 void update(int time)
 {
-	aiAnimation* anim = scene2->mAnimations[0]; // todo key to toggle anims
+	aiAnimation* anim;
+	if (animation == 1) {
+		anim = scene1->mAnimations[0];
+	} else if (animation == 2) {
+		anim = scene2->mAnimations[0];
+	} else {
+		anim = scene3->mAnimations[0];
+	}
 	double ticksPerSec = anim->mTicksPerSecond;
 	double tick = (time * ticksPerSec) / 1000; // 48 to inf, incr by 48, ticksPerSec = 4800
 	tick = fmod(tick, anim->mDuration);
@@ -271,7 +284,7 @@ void update(int time)
 			aiVector3D posn = channel->mPositionKeys[0].mValue;
 			if (channel->mNumPositionKeys > 1) { // 30 for skeleton, 1 for others
 				posn = aiVector3D(0, -3, -5.0); //interpolate_position(channel, tick);
-				rootPos = aiVector3D(0, -3, -5.0);
+				rootPos = posn;
 			}
 			// mNumRotationKeys either 1, 28, 29, 30
 			aiQuaternion rotn = channel->mRotationKeys[0].mValue; // should be 0
@@ -334,7 +347,15 @@ void update(int time)
 //----Keyboard callback to toggle initial model orientation---
 void keyboard(unsigned char key, int x, int y)
 {
-	if(key == '1') modelRotn = !modelRotn;   //Enable/disable initial model rotation
+	if (key == '1') {
+		animation = 1;
+	}
+	if (key == '2') {
+		animation = 2;
+	}
+	if (key == '3') {
+		animation = 3;
+	}
 	glutPostRedisplay();
 }
 

@@ -22,9 +22,9 @@ const aiScene* scene = NULL;
 GLuint scene_list = 0;
 float angle = 0;
 aiVector3D scene_min, scene_max;
-bool modelRotn = true;
 std::map<int, int> texIdMap;
 
+int animation = 1;
 aiVector3D rootPos;
 
 typedef struct original_mesh {
@@ -182,7 +182,7 @@ void render (const aiScene* sc, const aiNode* nd)
 //--------------------OpenGL initialization------------------------
 void initialise()
 {
-    glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
+    glClearColor(0.2f, 0.8f, 0.8f, 1.0f);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_DEPTH_TEST);
@@ -254,7 +254,7 @@ aiQuaternion interpolate_rotn(aiNodeAnim* channel, int tick) {
 //----Timer callback ----
 void update(int time)
 {
-	aiAnimation* anim = scene->mAnimations[0]; // todo wuson has 2 animations in the file - key to toggle
+	aiAnimation* anim = scene->mAnimations[animation - 1];
 	double ticksPerSec = anim->mTicksPerSecond;
 	int tick = (time * ticksPerSec) / 1000; // 48 to inf, incr by 48, ticksPerSec = 4800
 	tick = fmod(tick, anim->mDuration);
@@ -330,7 +330,12 @@ void update(int time)
 //----Keyboard callback to toggle initial model orientation---
 void keyboard(unsigned char key, int x, int y)
 {
-	if(key == '1') modelRotn = !modelRotn;   //Enable/disable initial model rotation
+	if (key == '1') {
+		animation = 1;
+	}
+	if (key == '2') {
+		animation = 2;
+	}
 	glutPostRedisplay();
 }
 
