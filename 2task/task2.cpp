@@ -274,7 +274,7 @@ void update(int time)
 	}
 	double ticksPerSec = anim->mTicksPerSecond;
 	double tick = (time * ticksPerSec) / 1000; // 48 to inf, incr by 48, ticksPerSec = 4800
-	tick = fmod(tick, anim->mDuration);
+	tick = fmod((float)tick, (float)anim->mDuration);
 
 	if (tick < anim->mDuration) { // 4640 divide 160 time between keys = 29 keys + 1 startpos
 		for (int i = 0; i < anim->mNumChannels; i++) {
