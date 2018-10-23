@@ -386,6 +386,18 @@ void display()
 		glTexCoord2f(3 + offset, 0.5); glVertex3f(xmax, y, zmax);
 		glTexCoord2f(3 + offset, 3.5); glVertex3f(xmax, y, zmin);
 	glEnd();
+	glDisable(GL_TEXTURE_2D);
+
+	glPushMatrix(); 
+		glColor4f(0.5, 0.4, 0.3, 1.0);
+		glTranslatef(rx - offset * 30, ry, rz - 30);
+		glScalef(3, 2.5, 1);
+		glutSolidCube(1);
+		glTranslatef(0, 0.3, 0);
+		glRotatef(-90, 1, 0, 0);
+		glutSolidCone(1, 0.8, 10, 10);
+	glPopMatrix();
+
 	if (animation == 1) {
 		offset -= 0.00072;
 	} else {
